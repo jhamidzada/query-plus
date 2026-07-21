@@ -1,0 +1,178 @@
+<Window x:Class="QueryPlus.App.Views.ManageTargetsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:QueryPlus.App.ViewModels"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        Title="Manage Targets" Height="700" Width="860"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Lists -->
+            <DockPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock DockPanel.Dock="Top" Text="Distribution Lists" FontWeight="Bold" Margin="0,0,0,4" />
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,4,0,0">
+                    <Button Content="Add" Width="60" Command="{Binding AddListCommand}" />
+                    <Button Content="Remove" Width="60" Margin="4,0,0,0" Command="{Binding RemoveListCommand}" />
+                </StackPanel>
+                <ListBox ItemsSource="{Binding Main.Lists}" SelectedItem="{Binding SelectedList}"
+                         DisplayMemberPath="Name" />
+            </DockPanel>
+
+            <!-- Selected list editor -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="0" Grid.Column="1" Margin="2"
+                                 Text="{Binding SelectedList.Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Auth" Margin="2" VerticalAlignment="Center" />
+                        <ComboBox Grid.Row="1" Grid.Column="1" Margin="2"
+                                  ItemsSource="{Binding AuthModes}"
+                                  SelectedItem="{Binding SelectedList.Auth}" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="1" Foreground="Gray" TextWrapping="Wrap" Margin="2,0,2,2"
+                                   Text="Windows = current login.  Sql = User + Password.  WindowsCredentials = Domain + User + Password (a different Windows account, e.g. another domain)." />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Domain" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="3" Grid.Column="1" Margin="2"
+                                 Text="{Binding SelectedList.Domain, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Windows domain (used only for the WindowsCredentials auth mode)" />
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="User" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="4" Grid.Column="1" Margin="2"
+                                 Text="{Binding SelectedList.SqlUser, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="SQL login (Sql auth) or Windows user name (WindowsCredentials auth)" />
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Password" Margin="2" VerticalAlignment="Center" />
+                        <DockPanel Grid.Row="5" Grid.Column="1" Margin="2">
+                            <CheckBox DockPanel.Dock="Right" Content="Remember" VerticalAlignment="Center"
+                                      Margin="6,0,0,0" IsChecked="{Binding SelectedList.RememberPassword}"
+                                      ToolTip="Save the password between sessions (encrypted with Windows DPAPI for your account on this machine)" />
+                            <PasswordBox x:Name="PasswordBox" />
+                        </DockPanel>
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Encryption" Margin="2" VerticalAlignment="Center" />
+                        <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="2">
+                            <ComboBox Width="120" ItemsSource="{Binding EncryptModes}"
+                                      SelectedItem="{Binding SelectedList.Encryption}" Margin="0,0,12,0" />
+                            <CheckBox Content="Trust Server Certificate" VerticalAlignment="Center"
+                                      IsChecked="{Binding SelectedList.TrustServerCertificate}" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Connect timeout (s)" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="7" Grid.Column="1" Margin="2" Width="80" HorizontalAlignment="Left"
+                                 Text="{Binding SelectedList.ConnectTimeoutSec, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Command timeout (s)" Margin="2" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="8" Grid.Column="1" Margin="2" Width="80" HorizontalAlignment="Left"
+                                 Text="{Binding SelectedList.CommandTimeoutSec, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+
+                    <Separator Margin="2,12,2,6" />
+                    <TextBlock Text="Targets" FontWeight="Bold" Margin="2,0,2,2" />
+                    <TextBlock Foreground="Gray" TextWrapping="Wrap" Margin="2,0,2,6"
+                               Text="Connect to a server to list its databases, then move them in bulk. Multi-select with Ctrl/Shift-click or Ctrl+A." />
+                    <StackPanel Orientation="Horizontal" Margin="2,0,2,4">
+                        <TextBox Width="220" Margin="0,0,4,0"
+                                 Text="{Binding ServerToConnect, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Server name or instance, e.g. SQLDEV01 or HOST\INSTANCE" />
+                        <Button Content="Connect" Command="{Binding ConnectCommand}" Width="80" />
+                        <TextBlock Text="{Binding ConnectStatus}" Foreground="#FF305080"
+                                   VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <Grid Height="230" Margin="2,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <DockPanel Grid.Column="0">
+                            <TextBlock DockPanel.Dock="Top" Text="Available on server" FontWeight="SemiBold" Margin="0,0,0,2" />
+                            <ListBox ItemsSource="{Binding Databases}" SelectionMode="Extended" DisplayMemberPath="Name">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+                                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                        <Setter Property="MinHeight" Value="0" />
+                                        <Setter Property="Padding" Value="8,4" />
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </DockPanel>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
+                            <Button Content="Add →" Command="{Binding AddSelectedCommand}" Margin="0,2" Padding="8,3" />
+                            <Button Content="Add all ⇒" Command="{Binding AddAllCommand}" Margin="0,2" Padding="8,3" />
+                            <Button Content="← Remove" Command="{Binding RemoveSelectedTargetsCommand}" Margin="0,16,0,2" Padding="8,3" />
+                        </StackPanel>
+
+                        <DockPanel Grid.Column="2">
+                            <TextBlock DockPanel.Dock="Top" Text="Targets in this list (Server \ Database)" FontWeight="SemiBold" Margin="0,0,0,2" />
+                            <ListBox ItemsSource="{Binding SelectedList.Targets}" SelectionMode="Extended" DisplayMemberPath="Display">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+                                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                        <Setter Property="MinHeight" Value="0" />
+                                        <Setter Property="Padding" Value="8,4" />
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </DockPanel>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="2,8,2,2">
+                        <Button Content="Use list credentials" Command="{Binding UseListCredentialsCommand}"
+                                Padding="8,2" Margin="0,0,6,0"
+                                ToolTip="Selected targets connect with this list's credentials (clears any override)" />
+                        <Button Content="Override selected with current credentials"
+                                Command="{Binding ApplyCredentialsToSelectedCommand}" Padding="8,2"
+                                ToolTip="Give selected targets their own credentials (for mixed-credential lists)" />
+                    </StackPanel>
+                    <TextBlock Foreground="Gray" TextWrapping="Wrap" Margin="2,2,2,0"
+                               Text="By default every target uses this list's credentials (set above) — set the auth/password once (tick Remember to save it, encrypted) and run. An override without its own saved password also falls back to the list. Use Override only for a list that mixes servers needing different logins." />
+
+                    <StackPanel Orientation="Horizontal" Margin="2,8,2,2">
+                        <TextBlock Text="Manual add:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBox Width="150" Margin="0,0,4,0"
+                                 Text="{Binding NewServer, UpdateSourceTrigger=PropertyChanged}" ToolTip="Server" />
+                        <TextBox Width="130" Margin="0,0,4,0"
+                                 Text="{Binding NewDatabase, UpdateSourceTrigger=PropertyChanged}" ToolTip="Database" />
+                        <Button Content="Add" Command="{Binding AddTargetCommand}" Padding="10,2" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="Close" Width="80" IsCancel="True" Click="CloseButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>
