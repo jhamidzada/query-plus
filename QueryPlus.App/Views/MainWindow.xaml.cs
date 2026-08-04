@@ -13,29 +13,12 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Title = $"QueryPlus  —  build {BuildStamp()}";
 
         // Replace the DataGrid's built-in copy (which serializes selected cells into several
         // clipboard formats, incl. HTML, on the UI thread — hangs on large grids) with a fast
         // single-format tab-separated copy driven straight from the underlying DataView.
         ResultsGrid.CommandBindings.Add(
             new CommandBinding(ApplicationCommands.Copy, OnResultsCopy, OnCanResultsCopy));
-    }
-
-    /// <summary>The running exe's timestamp, so it's obvious which build is in use.</summary>
-    private static string BuildStamp()
-    {
-        try
-        {
-            var exe = Environment.ProcessPath;
-            if (!string.IsNullOrEmpty(exe) && File.Exists(exe))
-                return File.GetLastWriteTime(exe).ToString("yyyy-MM-dd HH:mm");
-        }
-        catch
-        {
-            // fall through
-        }
-        return "unknown";
     }
 
     private void OnCanResultsCopy(object sender, CanExecuteRoutedEventArgs e)

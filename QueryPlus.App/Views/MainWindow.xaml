@@ -92,6 +92,12 @@
             <StatusBarItem>
                 <TextBlock Text="{Binding StatusText}" />
             </StatusBarItem>
+            <!-- Version, pinned right: unobtrusive but always checkable. -->
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="{Binding VersionDisplay, Mode=OneTime}"
+                           ToolTip="{Binding VersionDetail, Mode=OneTime}"
+                           Opacity="0.6" Margin="8,0" />
+            </StatusBarItem>
         </StatusBar>
 
         <!-- Main content: left targets | right editor/results -->

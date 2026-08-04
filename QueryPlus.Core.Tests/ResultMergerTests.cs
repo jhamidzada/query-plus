@@ -124,6 +124,47 @@ public class ResultMergerTests
     }
 
     [Fact]
+    public void AppendTarget_truncates_oversized_cells_for_display()
+    {
+        var merged = ResultMerger.CreateMergedTable();
+        var huge = new string('x', 5000);
+        var target = Target("S", "DB", new ResultSet("a.sql",
+            TestData.Table(new[] { "Query" }, new object?[] { huge })));
+
+        ResultMerger.AppendTarget(merged, target, maxRows: int.MaxValue, maxCellLength: 100);
+
+        var shown = (string)merged.Rows[0]["Query"];
+        shown.Length.Should().Be(100);
+        shown.Should().EndWith("… [truncated]");
+    }
+
+    [Fact]
+    public void AppendTarget_leaves_normal_cells_untouched_by_default()
+    {
+        var merged = ResultMerger.CreateMergedTable();
+        var target = Target("S", "DB", new ResultSet("a.sql",
+            TestData.Table(new[] { "V" }, new object?[] { "short value" })));
+
+        ResultMerger.AppendTarget(merged, target);
+
+        merged.Rows[0]["V"].Should().Be("short value");
+    }
+
+    [Fact]
+    public void WriteCsv_exports_full_untruncated_values()
+    {
+        // The grid truncates for display; exports must still carry the complete value.
+        var huge = new string('y', 40_000);
+        var report = Report(Target("S1", "DB1", new ResultSet("a.sql",
+            TestData.Table(new[] { "Query" }, new object?[] { huge }))));
+
+        var sw = new System.IO.StringWriter();
+        ResultMerger.WriteCsv(report, sw);
+
+        sw.ToString().Should().Contain(huge);
+    }
+
+    [Fact]
     public void WriteCsv_emits_header_and_rows_with_escaping_and_dbnull()
     {
         var report = Report(Target("S1", "DB1", new ResultSet("a.sql",

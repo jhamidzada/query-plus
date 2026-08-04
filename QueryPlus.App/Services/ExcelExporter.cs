@@ -13,6 +13,10 @@ public static class ExcelExporter
     // Excel worksheet limit: 1,048,576 rows total (including the header row).
     private const int MaxSheetRows = 1_048_576;
 
+    // Excel hard limit on characters in one cell. Writing more produces a file Excel reports as
+    // corrupt ("Repaired Records: String properties"), so oversized values are truncated.
+    private const int MaxCellChars = 32_767;
+
     // Style indices defined in BuildStylesheet: 0 = general, 1 = date, 2 = datetime.
     private const uint DateStyle = 1;
     private const uint DateTimeStyle = 2;
@@ -102,12 +106,16 @@ public static class ExcelExporter
         return TextCell(reference, value);
     }
 
-    private static Cell TextCell(string reference, string value) => new()
+    private static Cell TextCell(string reference, string value)
     {
-        CellReference = reference,
-        DataType = CellValues.InlineString,
-        InlineString = new InlineString(new Text(value) { Space = SpaceProcessingModeValues.Preserve })
-    };
+        var text = ResultMerger.Truncate(value, MaxCellChars)!;
+        return new Cell
+        {
+            CellReference = reference,
+            DataType = CellValues.InlineString,
+            InlineString = new InlineString(new Text(text) { Space = SpaceProcessingModeValues.Preserve })
+        };
+    }
 
     /// <summary>
     /// True only for a clean numeric literal safe to store as a number: optional sign, no leading

@@ -43,8 +43,11 @@ public static class ResultMerger
     /// columns as they are first seen. Lets the UI grow the grid live as targets complete.
     /// <paramref name="maxRows"/> caps the merged table's row count (columns are still added)
     /// so the grid stays responsive with huge result sets; the full data is exported via CSV.
+    /// <paramref name="maxCellLength"/> truncates individual values — a grid cannot render
+    /// multi-KB cells (e.g. captured SQL text), and exports read the original data, not this table.
     /// </summary>
-    public static void AppendTarget(DataTable merged, TargetResult target, int maxRows = int.MaxValue)
+    public static void AppendTarget(DataTable merged, TargetResult target, int maxRows = int.MaxValue,
+        int maxCellLength = int.MaxValue)
     {
         foreach (var rs in target.ResultSets)
         {
@@ -73,7 +76,7 @@ public static class ResultMerger
                     var value = source[col];
                     row[MergedColumnName(col.ColumnName)] = value is DBNull
                         ? DBNull.Value
-                        : Convert.ToString(value, CultureInfo.InvariantCulture);
+                        : Truncate(Convert.ToString(value, CultureInfo.InvariantCulture), maxCellLength);
                 }
 
                 merged.Rows.Add(row);
@@ -137,6 +140,17 @@ public static class ResultMerger
         writer.WriteLine(string.Join(",", columns.Select(CsvField)));
         foreach (var cells in EnumerateMergedRows(report, columns))
             writer.WriteLine(string.Join(",", cells.Select(CsvField)));
+    }
+
+    /// <summary>Caps a value's length, marking it so a truncated cell is never mistaken for the full value.</summary>
+    public static string? Truncate(string? value, int maxLength)
+    {
+        const string marker = "… [truncated]";
+        if (value == null || maxLength == int.MaxValue || value.Length <= maxLength)
+            return value;
+        return maxLength <= marker.Length
+            ? value[..maxLength]
+            : value[..(maxLength - marker.Length)] + marker;
     }
 
     private static string CsvField(string? value) =>

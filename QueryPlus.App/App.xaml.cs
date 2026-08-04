@@ -62,6 +62,9 @@ public partial class App : Application
             table.Columns.Add("When", typeof(string));
             table.Columns.Add("Code", typeof(string));
             table.Rows.Add("alpha", "123.45", "11/21/2023 00:00:00", "007");
+            // A cell far beyond Excel's 32,767-char limit — must be truncated, not written raw
+            // (raw makes Excel report the file as corrupt and "repair" it).
+            table.Rows.Add(new string('x', 50_000), "1", "11/21/2023 00:00:00", "008");
             var target = new QueryPlus.Core.Results.TargetResult("S1", "DB1");
             target.ResultSets.Add(new QueryPlus.Core.Results.ResultSet("a.sql", table));
             var report = new QueryPlus.Core.Results.RunReport(new[] { target });
@@ -91,7 +94,13 @@ public partial class App : Application
             var whenDate = when?.StyleIndex?.Value is 1 or 2;
             var codeText = code?.DataType?.Value == DocumentFormat.OpenXml.Spreadsheet.CellValues.InlineString;
 
-            return rowCount == 2 && amountNumeric && whenDate && codeText;
+            // No cell may exceed Excel's hard limit, or Excel flags the workbook as corrupt.
+            var longest = cells
+                .Select(c => c.InlineString?.Text?.Text?.Length ?? 0)
+                .DefaultIfEmpty(0).Max();
+            var withinCellLimit = longest is > 0 and <= 32_767;
+
+            return rowCount == 3 && amountNumeric && whenDate && codeText && withinCellLimit;
         }
         catch
         {

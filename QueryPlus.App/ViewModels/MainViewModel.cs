@@ -23,6 +23,13 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Cap on rows shown in the grid so it stays responsive; the full set is exported to CSV.</summary>
     private const int MaxGridRows = 100_000;
 
+    /// <summary>
+    /// Cap on characters per grid cell. WPF's DataGrid cannot lay out multi-KB cells (a captured
+    /// SQL-text column can be 50 KB+) and stops rendering rows. Exports read the original result
+    /// data, so they are unaffected by this display-only cap.
+    /// </summary>
+    private const int MaxGridCellChars = 2_000;
+
     private CancellationTokenSource? _cts;
     private DataTable _merged = ResultMerger.CreateMergedTable();
     private int _shownColumnCount;
@@ -51,6 +58,12 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<string> Errors { get; } = new();
 
     public const string AllScripts = "(all scripts)";
+
+    /// <summary>Short version for the status bar, e.g. "v1.0.0".</summary>
+    public string VersionDisplay => AppVersion.Display;
+
+    /// <summary>Full version incl. build id, shown as the version's tooltip.</summary>
+    public string VersionDetail => AppVersion.Detail;
 
     /// <summary>Script-name filter for the Results grid.</summary>
     public ObservableCollection<string> ScriptFilters { get; } = new() { AllScripts };
@@ -296,11 +309,21 @@ public sealed partial class MainViewModel : ObservableObject
             script.CompletedTargetCount = 0;
             script.RunTargetCount = script.IncludeInRun ? totalTargets : 0;
         }
-        ScriptFilters.Clear();
-        ScriptFilters.Add(AllScripts);
-        foreach (var name in included.Select(s => s.Title).Distinct())
+        // Rebuild the filter list in place. Clearing a bound ItemsSource makes the ComboBox push
+        // SelectedItem=null back into ScriptFilter, which would leave an empty row filter (a blank
+        // grid) — so re-assert the selection and re-apply the filter afterwards, unconditionally.
+        var wanted = new List<string> { AllScripts };
+        wanted.AddRange(included.Select(s => s.Title).Distinct());
+        for (var i = ScriptFilters.Count - 1; i >= 0; i--)
+        {
+            if (!wanted.Contains(ScriptFilters[i]))
+                ScriptFilters.RemoveAt(i);
+        }
+        foreach (var name in wanted.Where(n => !ScriptFilters.Contains(n)))
             ScriptFilters.Add(name);
+
         ScriptFilter = AllScripts;
+        ApplyScriptFilter();
 
         var scripts = included.Select(t => new ScriptItem(t.Title, t.Text)).ToList();
 
@@ -439,7 +462,7 @@ public sealed partial class MainViewModel : ObservableObject
                 _merged.BeginLoadData();
                 try
                 {
-                    ResultMerger.AppendTarget(_merged, target, MaxGridRows);
+                    ResultMerger.AppendTarget(_merged, target, MaxGridRows, MaxGridCellChars);
                 }
                 finally
                 {
@@ -478,9 +501,17 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (ResultsView == null)
             return;
-        ResultsView.RowFilter = string.IsNullOrEmpty(ScriptFilter) || ScriptFilter == AllScripts
+
+        // Anything that isn't a real script name (null/empty from a rebuilt ComboBox, or a stale
+        // name) means "show all" — never filter the grid down to nothing.
+        var filter = ScriptFilter;
+        var showAll = string.IsNullOrEmpty(filter)
+            || filter == AllScripts
+            || !ScriptFilters.Contains(filter);
+
+        ResultsView.RowFilter = showAll
             ? string.Empty
-            : $"[Script] = '{ScriptFilter.Replace("'", "''")}'";
+            : $"[Script] = '{filter.Replace("'", "''")}'";
     }
 
     /// <summary>
