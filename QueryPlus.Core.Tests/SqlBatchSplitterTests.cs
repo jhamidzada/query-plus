@@ -134,6 +134,26 @@ public class SqlBatchSplitterTests
     }
 
     [Fact]
+    public void Keeps_statement_after_a_leading_doc_block_comment_with_trailing_go()
+    {
+        // Shape of a real script: /** ... */ header comment, one statement, GO on the last line.
+        var sql =
+            "/**\r\n" +
+            "* Revised by: Someone\r\n" +
+            "* Revision date: 08/05/2026\r\n" +
+            "*/\r\n" +
+            "select * from Agent_Task_Param where parameter_name = 'Project types' \r\n" +
+            "and agent_task_id IN (select agent_task_id from Agent_Task where magic_task_code = 'StartProjectsAgent' AND is_active = 'Y')\r\n" +
+            "GO\r\n";
+
+        var batches = SqlBatchSplitter.Split(sql);
+
+        batches.Should().ContainSingle();
+        batches[0].Text.Should().Contain("select * from Agent_Task_Param");
+        batches[0].Text.Should().Contain("is_active = 'Y')");
+    }
+
+    [Fact]
     public void Does_not_treat_identifier_starting_with_go_as_separator()
     {
         var sql = "SELECT 1\nGOTO_LABEL:\nSELECT 2";
