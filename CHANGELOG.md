@@ -10,6 +10,17 @@ launching it:
 (Get-Item "C:\Program Files\QueryPlus\QueryPlus.exe").VersionInfo.ProductVersion
 ```
 
+## 1.1.1
+
+### Fixed
+- **"Remove" button under Distribution Lists showed as "Remov"** — the button had a fixed width
+  that clipped its label. Both list buttons now size to their content.
+- **Add / Add all / Remove in the targets shuttle were three different widths.** They now share a
+  single width so the shuttle reads as one control.
+
+### Changed
+- The authentication hint now describes **only the selected method**, instead of listing all three.
+
 ## 1.1.0
 
 ### Added

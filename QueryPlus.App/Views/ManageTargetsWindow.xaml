@@ -20,10 +20,12 @@
 
             <!-- Lists -->
             <DockPanel Grid.Column="0" Margin="0,0,8,0">
-                <TextBlock DockPanel.Dock="Top" Text="Distribution Lists" FontWeight="Bold" Margin="0,0,0,4" />
-                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,4,0,0">
-                    <Button Content="Add" Width="60" Command="{Binding AddListCommand}" />
-                    <Button Content="Remove" Width="60" Margin="4,0,0,0" Command="{Binding RemoveListCommand}" />
+                <TextBlock DockPanel.Dock="Top" Text="Distribution Lists"
+                           Style="{StaticResource PanelHeader}" Margin="0,0,0,4" />
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,6,0,0">
+                    <!-- MinWidth (not Width) so the label is never clipped. -->
+                    <Button Content="Add" MinWidth="80" Command="{Binding AddListCommand}" />
+                    <Button Content="Remove" MinWidth="80" Margin="6,0,0,0" Command="{Binding RemoveListCommand}" />
                 </StackPanel>
                 <ListBox ItemsSource="{Binding Main.Lists}" SelectedItem="{Binding SelectedList}"
                          DisplayMemberPath="Name" />
@@ -61,8 +63,22 @@
                             <ComboBoxItem Content="Windows Authentication (different account)" Tag="{x:Static domain:AuthMode.WindowsCredentials}" />
                         </ComboBox>
 
-                        <TextBlock Grid.Row="2" Grid.Column="1" Foreground="Gray" TextWrapping="Wrap" Margin="2,0,2,2"
-                                   Text="Windows Authentication uses the account you are signed in with. SQL Server Authentication uses a login held on the server (User + Password). The third option signs in as a different Windows account (Domain + User + Password) — useful when the server trusts another domain." />
+                        <!-- Only the selected mode's description, so the hint stays short. -->
+                        <TextBlock Grid.Row="2" Grid.Column="1" Foreground="Gray" TextWrapping="Wrap" Margin="2,0,2,2">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="Signs in as the Windows account you are currently using." />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedList.Auth}" Value="{x:Static domain:AuthMode.Sql}">
+                                            <Setter Property="Text" Value="Uses a SQL login held on the server — enter User and Password." />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedList.Auth}" Value="{x:Static domain:AuthMode.WindowsCredentials}">
+                                            <Setter Property="Text" Value="Signs in as a different Windows account — enter Domain, User and Password. Works even when this machine does not trust that domain." />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
 
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="Domain" Margin="2" VerticalAlignment="Center" />
                         <TextBox Grid.Row="3" Grid.Column="1" Margin="2"
@@ -136,10 +152,19 @@
                             </ListBox>
                         </DockPanel>
 
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                            <Button Content="Add →" Command="{Binding AddSelectedCommand}" Margin="0,2" Padding="8,3" />
-                            <Button Content="Add all ⇒" Command="{Binding AddAllCommand}" Margin="0,2" Padding="8,3" />
-                            <Button Content="← Remove" Command="{Binding RemoveSelectedTargetsCommand}" Margin="0,16,0,2" Padding="8,3" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
+                            <!-- One width for all three so the shuttle reads as a single control. -->
+                            <StackPanel.Resources>
+                                <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                                    <Setter Property="Width" Value="104" />
+                                    <Setter Property="Margin" Value="0,3" />
+                                    <Setter Property="Padding" Value="8,4" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                </Style>
+                            </StackPanel.Resources>
+                            <Button Content="Add →" Command="{Binding AddSelectedCommand}" />
+                            <Button Content="Add all ⇒" Command="{Binding AddAllCommand}" />
+                            <Button Content="← Remove" Command="{Binding RemoveSelectedTargetsCommand}" Margin="0,18,0,3" />
                         </StackPanel>
 
                         <DockPanel Grid.Column="2">
