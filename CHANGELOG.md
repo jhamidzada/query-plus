@@ -10,6 +10,12 @@ launching it:
 (Get-Item "C:\Program Files\QueryPlus\QueryPlus.exe").VersionInfo.ProductVersion
 ```
 
+## 1.0.2
+
+### Changed
+- Moved **Export CSV…** and **Export Excel…** out of the main toolbar and into the Results tab,
+  to the right of the Script filter — they act on the results, so they now sit with them.
+
 ## 1.0.1
 
 ### Fixed

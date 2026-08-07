@@ -61,10 +61,6 @@
                 <Button Content="■  Stop" Command="{Binding StopCommand}" />
                 <Border Style="{StaticResource Sep}" />
                 <Button Content="Manage Targets…" Command="{Binding ManageTargetsCommand}" />
-                <Button Content="Export CSV…" Command="{Binding ExportCsvCommand}"
-                        ToolTip="Save all result rows (beyond the on-screen cap) to a CSV file" />
-                <Button Content="Export Excel…" Command="{Binding ExportExcelCommand}"
-                        ToolTip="Save all result rows to an .xlsx workbook" />
             </WrapPanel>
         </Border>
 
@@ -253,11 +249,19 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4,4,4,2">
-                                <TextBlock Text="Script:" VerticalAlignment="Center" Margin="0,0,4,0" />
-                                <ComboBox Width="220" ItemsSource="{Binding ScriptFilters}"
+                            <!-- Results toolbar: filter on the left, exports on the right — they act
+                                 on the results, so they live with the results. -->
+                            <DockPanel DockPanel.Dock="Top" Margin="4,4,4,2" LastChildFill="False">
+                                <TextBlock DockPanel.Dock="Left" Text="Script:" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                <ComboBox DockPanel.Dock="Left" Width="220" ItemsSource="{Binding ScriptFilters}"
                                           SelectedItem="{Binding ScriptFilter}" />
-                            </StackPanel>
+                                <Button DockPanel.Dock="Right" Content="Export Excel…" Margin="4,0,0,0"
+                                        Command="{Binding ExportExcelCommand}"
+                                        ToolTip="Save all result rows to an .xlsx workbook" />
+                                <Button DockPanel.Dock="Right" Content="Export CSV…"
+                                        Command="{Binding ExportCsvCommand}"
+                                        ToolTip="Save all result rows (beyond the on-screen cap) to a CSV file" />
+                            </DockPanel>
                             <DataGrid x:Name="ResultsGrid" ItemsSource="{Binding ResultsView}"
                                       AutoGenerateColumns="True" IsReadOnly="True"
                                       CanUserAddRows="False" CanUserDeleteRows="False"
