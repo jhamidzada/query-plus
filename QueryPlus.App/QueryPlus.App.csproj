@@ -15,7 +15,7 @@
 
     <!-- Semantic version — the single source of truth for the app's version.
          MAJOR = breaking change, MINOR = new feature, PATCH = bug fix. -->
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
 
     <!-- Appended by the SDK to InformationalVersion as "1.0.0+build.20260804.0812", so two builds
          of the same version are still distinguishable (shown in the version tooltip). -->

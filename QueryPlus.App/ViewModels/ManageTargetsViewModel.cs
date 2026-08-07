@@ -70,6 +70,26 @@ public sealed partial class ManageTargetsViewModel : ObservableObject
         ConnectStatus = string.Empty;
     }
 
+    /// <summary>Feedback under the Save button, e.g. "Saved 14:32:07".</summary>
+    [ObservableProperty]
+    private string _saveStatus = string.Empty;
+
+    /// <summary>Writes lists/targets to disk now, so it is obvious changes were kept.</summary>
+    [RelayCommand]
+    private void Save()
+    {
+        try
+        {
+            SelectedList?.RebuildGroups();
+            Main.SaveConfig();
+            SaveStatus = $"Saved {DateTime.Now:HH:mm:ss}";
+        }
+        catch (Exception ex)
+        {
+            SaveStatus = $"Save failed: {ex.Message}";
+        }
+    }
+
     [RelayCommand]
     private void AddList()
     {

@@ -10,6 +10,24 @@ launching it:
 (Get-Item "C:\Program Files\QueryPlus\QueryPlus.exe").VersionInfo.ProductVersion
 ```
 
+## 1.1.0
+
+### Added
+- **Save button in Manage Targets.** Lists, targets and credentials can now be saved explicitly,
+  with a `Saved HH:mm:ss` confirmation, instead of only being written when the dialog closes.
+
+### Changed
+- **Authentication modes renamed to match SQL Server Management Studio**: `Windows Authentication`,
+  `SQL Server Authentication`, and `Windows Authentication (different account)` for the
+  alternate-credentials mode. Encryption modes now read `Optional (only if server requires)`,
+  `Mandatory (always encrypt)` and `Strict (TDS 8.0)`. Saved configuration is unaffected — only
+  the on-screen wording changed.
+- **Export buttons moved next to the Script filter** in the Results tab, instead of being pushed
+  to the far right edge where they were easy to miss.
+- **Visual refresh**: semantic button colours (primary blue for Execute/Save, red for Stop,
+  outlined blue for secondary actions), tinted toolbars, coloured panel headings, and consistent
+  compact buttons in the Targets/Scripts panels.
+
 ## 1.0.2
 
 ### Changed

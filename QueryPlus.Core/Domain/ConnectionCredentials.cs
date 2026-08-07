@@ -35,8 +35,9 @@ public sealed class ConnectionCredentials
     /// <summary>Short, password-free description for the UI.</summary>
     public string Summary() => Auth switch
     {
-        AuthMode.Sql => $"Sql: {SqlUser}",
-        AuthMode.WindowsCredentials => $"Win: {(string.IsNullOrEmpty(Domain) ? string.Empty : Domain + "\\")}{SqlUser}",
-        _ => "Windows"
+        AuthMode.Sql => $"{AuthModeNames.Short(Auth)}: {SqlUser}",
+        AuthMode.WindowsCredentials =>
+            $"{AuthModeNames.Short(Auth)}: {(string.IsNullOrEmpty(Domain) ? string.Empty : Domain + "\\")}{SqlUser}",
+        _ => AuthModeNames.Short(Auth)
     };
 }
