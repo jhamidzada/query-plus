@@ -10,6 +10,14 @@ launching it:
 (Get-Item "C:\Program Files\QueryPlus\QueryPlus.exe").VersionInfo.ProductVersion
 ```
 
+## 1.2.0
+
+### Added
+- **Scripts can be reordered by dragging.** Scripts run top-to-bottom, so their order matters;
+  drag a script up or down in the Scripts list to change the order it runs in. The list reorders
+  live as you drag, and dropping below the last row moves the script to the end. Dragging starts
+  only from the script row, so the include-in-run checkbox still toggles normally.
+
 ## 1.1.1
 
 ### Fixed

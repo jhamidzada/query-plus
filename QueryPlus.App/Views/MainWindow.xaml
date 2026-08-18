@@ -181,10 +181,19 @@
                             <Button Content="✓ All" Command="{Binding CheckAllCommand}" />
                             <Button Content="✗ All" Command="{Binding UncheckAllCommand}" />
                         </WrapPanel>
-                        <ListBox ItemsSource="{Binding ScriptTabs}" SelectedItem="{Binding SelectedTab}"
+                        <!-- Scripts run top-to-bottom, so the list is drag-reorderable
+                             (handlers in MainWindow.xaml.cs). -->
+                        <ListBox x:Name="ScriptsList"
+                                 ItemsSource="{Binding ScriptTabs}" SelectedItem="{Binding SelectedTab}"
                                  SelectionMode="Extended"
                                  HorizontalContentAlignment="Stretch"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 AllowDrop="True"
+                                 PreviewMouseLeftButtonDown="ScriptsList_PreviewMouseLeftButtonDown"
+                                 PreviewMouseMove="ScriptsList_PreviewMouseMove"
+                                 DragOver="ScriptsList_DragOver"
+                                 Drop="ScriptsList_Drop"
+                                 ToolTip="Drag a script up or down to change the order it runs in">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
                                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
