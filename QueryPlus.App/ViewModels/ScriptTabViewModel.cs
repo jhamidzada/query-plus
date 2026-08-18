@@ -23,6 +23,10 @@ public sealed partial class ScriptTabViewModel : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
+    /// <summary>True while this script is being dragged, so its row can be highlighted.</summary>
+    [ObservableProperty]
+    private bool _isDragging;
+
     /// <summary>Rows this script produced across all targets in the last run.</summary>
     [ObservableProperty]
     private int _resultRowCount;

@@ -204,7 +204,14 @@
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:ScriptTabViewModel}">
+                                  <Border x:Name="RowRoot" Background="Transparent" BorderThickness="1"
+                                          BorderBrush="Transparent" CornerRadius="3" Padding="2,1">
                                     <DockPanel LastChildFill="True">
+                                        <!-- Grip: signals the row can be dragged to reorder. -->
+                                        <TextBlock x:Name="Grip" DockPanel.Dock="Left" Text="⋮⋮"
+                                                   VerticalAlignment="Center" Margin="0,0,5,0"
+                                                   FontSize="12" Foreground="#FFAAB4BE"
+                                                   ToolTip="Drag to change the order this script runs in" />
                                         <CheckBox DockPanel.Dock="Left" IsChecked="{Binding IncludeInRun}"
                                                   Style="{StaticResource CompactCheckBox}" Margin="0,0,6,0"
                                                   ToolTip="Include this script in the run" />
@@ -231,6 +238,26 @@
                                                          BorderThickness="0" Background="Transparent" />
                                         </StackPanel>
                                     </DockPanel>
+                                  </Border>
+                                  <DataTemplate.Triggers>
+                                      <!-- The row being dragged: lifted card look, so it is obvious
+                                           which script is moving as the list reflows around it. -->
+                                      <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                          <Setter TargetName="RowRoot" Property="Background" Value="#FFD6E9FB" />
+                                          <Setter TargetName="RowRoot" Property="BorderBrush" Value="{StaticResource BrandBrush}" />
+                                          <Setter TargetName="RowRoot" Property="Effect">
+                                              <Setter.Value>
+                                                  <DropShadowEffect Color="#FF0F6CBD" BlurRadius="8"
+                                                                    ShadowDepth="0" Opacity="0.55" />
+                                              </Setter.Value>
+                                          </Setter>
+                                          <Setter TargetName="Grip" Property="Foreground" Value="{StaticResource BrandBrush}" />
+                                      </DataTrigger>
+                                      <!-- Grip darkens on hover to hint the row is draggable. -->
+                                      <Trigger SourceName="RowRoot" Property="IsMouseOver" Value="True">
+                                          <Setter TargetName="Grip" Property="Foreground" Value="{StaticResource BrandBrush}" />
+                                      </Trigger>
+                                  </DataTemplate.Triggers>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>

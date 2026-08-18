@@ -10,6 +10,13 @@ launching it:
 (Get-Item "C:\Program Files\QueryPlus\QueryPlus.exe").VersionInfo.ProductVersion
 ```
 
+## 1.2.1
+
+### Changed
+- **Clearer drag feedback when reordering scripts.** The row being dragged now stands out as a
+  lifted card (tinted fill, accent border and glow) while the rest of the list reflows around it,
+  and each row shows a grip handle that highlights on hover to signal it can be dragged.
+
 ## 1.2.0
 
 ### Added

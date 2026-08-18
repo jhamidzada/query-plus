@@ -61,7 +61,18 @@ public partial class MainWindow : Window
 
         var item = _dragItem;
         _dragItem = null;
-        DragDrop.DoDragDrop(ScriptsList, item, DragDropEffects.Move);
+
+        // Flag the row so the template can highlight it for the duration of the drag
+        // (DoDragDrop blocks until the drop completes or is cancelled).
+        item.IsDragging = true;
+        try
+        {
+            DragDrop.DoDragDrop(ScriptsList, item, DragDropEffects.Move);
+        }
+        finally
+        {
+            item.IsDragging = false;
+        }
     }
 
     private void ScriptsList_DragOver(object sender, DragEventArgs e)
