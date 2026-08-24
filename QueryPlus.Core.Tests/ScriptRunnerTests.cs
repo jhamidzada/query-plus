@@ -64,7 +64,8 @@ public class ScriptRunnerTests
             Scripts(("a.sql", "UPDATE t SET x = 1")),
             Options(), null, CancellationToken.None);
 
-        report.Targets.Single().Messages.Should().ContainSingle().Which.Should().Be("batch 1/1 completed");
+        report.Targets.Single().Messages.Should().ContainSingle()
+            .Which.Should().Be("a.sql — batch 1/1 completed (no rows)");
     }
 
     [Fact]
@@ -83,7 +84,8 @@ public class ScriptRunnerTests
             Scripts(("a.sql", "PRINT 'hello'")),
             Options(), null, CancellationToken.None);
 
-        report.Targets.Single().Messages.Should().Equal("hello", "world", "batch 1/1 returned 1 result set(s)");
+        report.Targets.Single().Messages.Should().Equal(
+            "hello", "world", "a.sql — batch 1/1: 1 row returned");
     }
 
     [Fact]
@@ -234,6 +236,64 @@ public class ScriptRunnerTests
         progress.Reports.Select(r => r.CompletedTargets).OrderBy(x => x)
             .Should().Equal(1, 2, 3, 4, 5);
         progress.Reports.Should().OnlyContain(r => r.CompletedTarget != null);
+    }
+
+    [Fact]
+    public async Task Reports_rows_affected_like_ssms()
+    {
+        var executor = new FakeBatchExecutor(_ => new FakeTargetConnection
+        {
+            OnExecute = (_, _) => Task.FromResult(new BatchExecutionResult { RowsAffected = 1234 })
+        });
+        var runner = new ScriptRunner(executor);
+
+        var report = await runner.RunAsync(
+            TestData.List(TestData.Target("S1", "DB1")),
+            Scripts(("update.sql", "UPDATE t SET x = 1")),
+            Options(), null, CancellationToken.None);
+
+        var target = report.Targets.Single();
+        target.Messages.Should().ContainSingle()
+            .Which.Should().Be("update.sql — batch 1/1: 1,234 rows affected");
+        target.RowsAffected.Should().Be(1234);
+    }
+
+    [Fact]
+    public async Task Rows_affected_accumulates_across_batches()
+    {
+        var executor = new FakeBatchExecutor(_ => new FakeTargetConnection
+        {
+            OnExecute = (_, _) => Task.FromResult(new BatchExecutionResult { RowsAffected = 5 })
+        });
+        var runner = new ScriptRunner(executor);
+
+        var report = await runner.RunAsync(
+            TestData.List(TestData.Target("S1", "DB1")),
+            Scripts(("m.sql", "A\nGO\nB\nGO\nC")),
+            Options(), null, CancellationToken.None);
+
+        report.Targets.Single().RowsAffected.Should().Be(15);
+    }
+
+    [Fact]
+    public async Task Reports_row_count_for_each_result_set()
+    {
+        var executor = new FakeBatchExecutor(_ => new FakeTargetConnection
+        {
+            OnExecute = (_, _) => Task.FromResult(TestData.Result(
+                TestData.Table(new[] { "A" }, new object?[] { "1" }, new object?[] { "2" }),
+                TestData.Table(new[] { "B" }, new object?[] { "x" })))
+        });
+        var runner = new ScriptRunner(executor);
+
+        var report = await runner.RunAsync(
+            TestData.List(TestData.Target("S1", "DB1")),
+            Scripts(("multi.sql", "SELECT 1; SELECT 2")),
+            Options(), null, CancellationToken.None);
+
+        report.Targets.Single().Messages.Should().Equal(
+            "multi.sql — batch 1/1 (result set 1): 2 rows returned",
+            "multi.sql — batch 1/1 (result set 2): 1 row returned");
     }
 
     [Fact]

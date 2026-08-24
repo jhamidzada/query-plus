@@ -34,6 +34,7 @@ public sealed partial class MainViewModel : ObservableObject
     private DataTable _merged = ResultMerger.CreateMergedTable();
     private int _shownColumnCount;
     private long _totalResultRows;
+    private long _totalRowsAffected;
     private RunReport? _lastReport;
 
     public MainViewModel(
@@ -295,6 +296,7 @@ public sealed partial class MainViewModel : ObservableObject
         ResultsView = _merged.DefaultView;
         _shownColumnCount = _merged.Columns.Count;
         _totalResultRows = 0;
+        _totalRowsAffected = 0;
         _lastReport = null;
         ResultsTruncatedText = string.Empty;
         ExportCsvCommand.NotifyCanExecuteChanged();
@@ -347,7 +349,8 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var report = await _runner.RunAsync(list, scripts, options, progress, _cts.Token);
             _lastReport = report;
-            StatusText = $"Completed {report.Targets.Count} target(s) — {_totalResultRows:N0} row(s), {Errors.Count} error(s)";
+            var affected = _totalRowsAffected > 0 ? $", {_totalRowsAffected:N0} row(s) affected" : string.Empty;
+            StatusText = $"Completed {report.Targets.Count} target(s) — {_totalResultRows:N0} row(s) returned{affected}, {Errors.Count} error(s)";
             ResultsTruncatedText = _totalResultRows > _merged.Rows.Count
                 ? $"Showing the first {_merged.Rows.Count:N0} of {_totalResultRows:N0} rows. Use “Export CSV” for the full set."
                 : string.Empty;
@@ -454,6 +457,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (progress.CompletedTarget is { } target)
         {
             _totalResultRows += target.ResultSets.Sum(r => (long)r.Table.Rows.Count);
+            _totalRowsAffected += target.RowsAffected;
 
             // Append to the grid, capped for responsiveness. BeginLoadData suppresses per-row
             // change notifications so the bound grid doesn't churn on bulk inserts.

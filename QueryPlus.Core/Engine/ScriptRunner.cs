@@ -126,6 +126,9 @@ public sealed class ScriptRunner : IScriptRunner
         return result;
     }
 
+    /// <summary>"1 row" / "1,234 rows", matching SSMS's phrasing.</summary>
+    private static string Rows(int count) => count == 1 ? "1 row" : $"{count:N0} rows";
+
     private static void ReportSkipped(IReadOnlyList<ScriptItem> scripts, int startIndex, IProgress<ScriptProgress>? scriptProgress)
     {
         if (scriptProgress == null)
@@ -165,16 +168,31 @@ public sealed class ScriptRunner : IScriptRunner
                 {
                     var batchResult = await connection.ExecuteBatchAsync(batch.Text, ct).ConfigureAwait(false);
 
-                    foreach (var table in batchResult.Tables)
-                        result.ResultSets.Add(new ResultSet(script.Name, table));
-
                     foreach (var message in batchResult.InfoMessages)
                         result.Messages.Add(message);
 
-                    if (batchResult.Tables.Count == 0)
-                        result.Messages.Add($"{label} completed");
-                    else
-                        result.Messages.Add($"{label} returned {batchResult.Tables.Count} result set(s)");
+                    // Report counts the way SSMS does: one line per result set, plus the
+                    // rows changed by any INSERT/UPDATE/DELETE in the batch.
+                    for (var t = 0; t < batchResult.Tables.Count; t++)
+                    {
+                        var table = batchResult.Tables[t];
+                        result.ResultSets.Add(new ResultSet(script.Name, table));
+
+                        var which = batchResult.Tables.Count > 1 ? $" (result set {t + 1})" : string.Empty;
+                        result.Messages.Add(
+                            $"{script.Name} — {label}{which}: {Rows(table.Rows.Count)} returned");
+                    }
+
+                    if (batchResult.RowsAffected > 0)
+                    {
+                        result.RowsAffected += batchResult.RowsAffected;
+                        result.Messages.Add(
+                            $"{script.Name} — {label}: {Rows(batchResult.RowsAffected)} affected");
+                    }
+                    else if (batchResult.Tables.Count == 0)
+                    {
+                        result.Messages.Add($"{script.Name} — {label} completed (no rows)");
+                    }
                 }
                 catch (OperationCanceledException)
                 {

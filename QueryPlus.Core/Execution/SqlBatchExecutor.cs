@@ -77,19 +77,36 @@ public sealed class SqlBatchExecutor : IBatchExecutor
             command.CommandType = CommandType.Text;
             command.CommandTimeout = _commandTimeoutSec;
 
-            await using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            do
+            // RecordsAffected is only final once the reader is closed, so close it explicitly
+            // before reading the count rather than relying on disposal order.
+            var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            int rowsAffected;
+            try
             {
-                if (reader.FieldCount > 0)
-                    tables.Add(await ReadTableAsync(reader, ct).ConfigureAwait(false));
+                do
+                {
+                    if (reader.FieldCount > 0)
+                        tables.Add(await ReadTableAsync(reader, ct).ConfigureAwait(false));
+                }
+                while (await reader.NextResultAsync(ct).ConfigureAwait(false));
             }
-            while (await reader.NextResultAsync(ct).ConfigureAwait(false));
+            finally
+            {
+                await reader.CloseAsync().ConfigureAwait(false);
+                rowsAffected = reader.RecordsAffected;
+                await reader.DisposeAsync().ConfigureAwait(false);
+            }
 
             var messages = new List<string>();
             while (_infoMessages.TryDequeue(out var message))
                 messages.Add(message);
 
-            return new BatchExecutionResult { Tables = tables, InfoMessages = messages };
+            return new BatchExecutionResult
+            {
+                Tables = tables,
+                InfoMessages = messages,
+                RowsAffected = rowsAffected
+            };
         }
 
         private static async Task<DataTable> ReadTableAsync(SqlDataReader reader, CancellationToken ct)

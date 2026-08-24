@@ -10,6 +10,16 @@ launching it:
 (Get-Item "C:\Program Files\QueryPlus\QueryPlus.exe").VersionInfo.ProductVersion
 ```
 
+## 1.3.0
+
+### Added
+- **SSMS-style row counts in the Messages tab.** Each batch now reports how many rows it returned
+  and, for INSERT/UPDATE/DELETE/MERGE, how many rows were **affected** — the count SSMS shows as
+  "(N rows affected)", which the app previously never captured. Multi-result-set batches report
+  each set separately.
+- **Run summary includes rows affected**, e.g.
+  `Completed 30 target(s) — 1,240 row(s) returned, 5,000 row(s) affected, 0 error(s)`.
+
 ## 1.2.1
 
 ### Changed

@@ -20,5 +20,8 @@ public sealed class TargetResult
 
     public IList<string> Errors { get; } = new List<string>();
 
+    /// <summary>Total rows changed by INSERT/UPDATE/DELETE across this target's batches.</summary>
+    public int RowsAffected { get; set; }
+
     public TimeSpan Elapsed { get; set; }
 }
